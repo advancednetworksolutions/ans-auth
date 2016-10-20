@@ -8,9 +8,11 @@ var rsaValidation = require('auth0-api-jwt-rsa-validation');
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
 var User = require("./app/models/user");
+var Shoretel = require("./app/models/shoretel");
 var ADirectory = require('activedirectory');
 var config = require('./config/config');
-
+var mysqldb = require('./config/mysqldb');
+var controller = require('./app/controllers/shoretel/calls.controller');
 
 // =================
 // Configuration ===
@@ -42,16 +44,17 @@ apiRoutes.post('/authenticate', function(req, res) {
   ad.authenticate(req.body.username, req.body.password, function(err, auth) {
     if (err) {
       res.status(401).json({
-        success:false,
+        success: false,
         message: 'Authentication failed'
       });
       console.log('ERROR: ' + JSON.stringify(err));
       return;
     }
     if (auth) {
+
       var shortUsername = req.body.username.slice(0, req.body.username.indexOf("@"));
-      var token = jwt.sign(shortUsername, app.get('superSecret'), {
-      });
+      var user = new User(shortUsername, req.body.email);
+      var token = jwt.sign(user, app.get('superSecret'), {});
       res.status(200).json({
         success: true,
         username: shortUsername,
@@ -60,7 +63,7 @@ apiRoutes.post('/authenticate', function(req, res) {
       });
     } else {
       res.status(401).json({
-        success:false,
+        success: false,
         message: 'Authentication failed'
       });
     }
@@ -83,7 +86,10 @@ apiRoutes.use(function(req, res, next) {
     // verifies secret and checks exp
     jwt.verify(token, app.get('superSecret'), function(err, decoded) {
       if (err) {
-        return res.json({ success: false, message: 'Failed to authenticate token.' });
+        return res.json({
+          success: false,
+          message: 'Failed to authenticate token.'
+        });
       } else {
         // if everything is good, save to request for use in other routes
         req.decoded = decoded;
@@ -96,8 +102,8 @@ apiRoutes.use(function(req, res, next) {
     // if there is no token
     // return an error
     return res.status(403).send({
-        success: false,
-        message: 'No token provided.'
+      success: false,
+      message: 'No token provided.'
     });
 
   }
@@ -106,13 +112,18 @@ apiRoutes.use(function(req, res, next) {
 //Home route
 apiRoutes.get('/', function(req, res) {
   res.json({
-    success:true,
+    success: true,
     message: "Welcome to the ANS LDAP authentication service"
   });
 });
+
+//test shoretell data route
+apiRoutes.get('/shoretel/calls', controller.show);
+
 app.use('/', apiRoutes);
+
 // =====================
 // Start the server ====
 // =====================
 app.listen(port);
-console.log('Rockin and rollin at http://localhost:'+port);
+console.log('Rockin and rollin at http://localhost:' + port);

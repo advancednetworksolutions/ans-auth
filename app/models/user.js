@@ -1,13 +1,10 @@
 /**
  * Constructor, with class name
  */
-function User(firstName, lastName, email, role, permissions) {
+function User(username, email) {
   // Public properties, assigned to the instance ('this')
-  this.firstName = firstName;
-  this.lastName = lastName;
+  this.username = username;
   this.email = email;
-  this.role = role;
-  this.permissions = permissions;
 };
 
 User.prototype.log = function () {
